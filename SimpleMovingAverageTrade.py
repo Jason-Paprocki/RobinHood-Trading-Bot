@@ -8,7 +8,7 @@ def login():
     #login using the login
     #===============================================
     #u need the 2FA to login whenever it asks
-    
+    trader.login(
 
 def checkBalance():
     #checks the balance by loading the account and returning the buying power
@@ -42,55 +42,86 @@ def movingAverage(json, stock):
     with open('MovingAverage.json', 'w') as outfile:
         json.dump(SimpleMovingAverageDictionary, outfile, indent = 4)
 
-    
-
-def getLatestPrice(stock):
-    return trader.stocks.get_latest_price(stock)
-
-def logLastClosingPrice():
+def logClosingPrice(stock):
     #time format 2020-01-11T20:19:00.000000+00:00
     timeNow = str(zulu.now())
     
-    #opens file with the blacklisted dates
+    #opens the json file with the closing prices 
+    with open('closingPricesWeek.json') as json_file:
+        closingPricesWeekDictionary = json.load(json_file)
+        
+
+    #opens file with the dates that the stock market is closed
     with open('BlacklistedDates.json') as json_file:
             BlacklistedDates = json.load(json_file)
     
+    #the moving average is calculated every 10 minutes
+    #creates the next time that the log needs to happen
+    hour = int(timeNow[11:13])
+    currentMinute = timeNow[14:16]
+    if (str(currentMinute[1:2]) == "0"):
+        logTime = currentMinute
+    else:
+        logTime = (int(currentMinute)+10) - int(currentMinute[1:2])
 
-    allDataDictionary = trader.stocks.get_historicals("HEXO", span = "week", bounds = "regular")
-    cooldict={}
-    closingprice = []
-    beginsat = []
-    for i in range(len(allDataDictionary)):
-        closingprice.append(allDataDictionary[i]["close_price"])
-    for i in range(len(allDataDictionary)):
-        beginsat.append(allDataDictionary[i]["begins_at"])
-    for i in range(len(closingprice)):
-        cooldict[beginsat[i]] = closingprice[i]
-    print(cooldict)
+    #formats the date to allow for testing
+    formatedDate = str(timeNow[0:11]) + str(hour) + ":"+ str(logTime)
 
+    #checks if the stock market is open by making sure it is now a blacklisted date
+    todayIsBlacklisted = False
+    for date in BlacklistedDates:
+        if( str(timeNow[0:10]) == str(date)):
+            todayIsBlacklisted = True
 
+    #checks if the time now is the proper logging time
+    if (timeNow[0:16] == formatedDate):
+        #if the date is not blacklisted
+        if(not todayIsBlacklisted):
+            #this will format the date to match the others and then add it to the dictionary
+            dateFormated = timeNow[0:16]+":00Z"
+            latestPrice = str(trader.get_latest_price(stock))
+            closingPricesWeekDictionary[dateFormated] = latestPrice[2:10]
+    
     #opens json file with the closing prices
-    with open('closingprices.json', 'w') as outfile:
-        json.dump(cooldict, outfile, indent = 4)
+    with open('closingPricesWeek.json', 'w') as outfile:
+        json.dump(closingPricesWeekDictionary, outfile, indent = 4)
 
-    #checks time for 3:50pm
-    while (str(timenow[11:20]) == "15:50"):
-        
-        #checks if the stock market is open by making sure it is now a blacklisted date
-        for date in BlacklistedDates:
-            if( str(timeNow[0:10]) != str(date)):
-                pass
+def buy(price, stock):
+    #opens the json file with the moving average
+    with open('MovingAverage.json') as json_file:
+        MovingAverageDictionary = json.load(json_file)
+    
+    MovingAverages = []
+    lastMovingAveragePrice = 0
+    #finds the last moving average price
+    for key in MovingAverageDictionary:
+        MovingAverages.append(MovingAverageDictionary[key])
+    lastMovingAveragePrice = MovingAverages[len(MovingAverages)-1]
+
+
+
+
+
+
+
+
+
+
+
 
 
 def main():
     #login first
     login()
-    movingAverage(json, "HEXO")
 
-
-    logLastClosingPrice()
-    #loggingTheClosingPriceThread = threading.Thread(target = logLastClosingPrice)
-    #loggingTheClosingPriceThread.start()
+    #define the stock we are going to use
+    stock = "HEXO"
+    #
+    movingAverage(json, stock)
+    logClosingPrice(stock)
+    
+    currentStockPrice = trader.stocks.get_latest_price(stock)
+    buy(currentStockPrice, stock)
     
 
 
