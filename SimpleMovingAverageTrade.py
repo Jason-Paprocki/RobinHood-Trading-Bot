@@ -8,7 +8,7 @@ def login():
     #login using the login
     #===============================================
     #u need the 2FA to login whenever it asks
-    trader.login()
+    trader.login(
 
 def checkBalance():
     #checks the balance by loading the account and returning the buying power
@@ -42,12 +42,21 @@ def movingAverage(json, stock):
     with open('MovingAverage.json', 'w') as outfile:
         json.dump(SimpleMovingAverageDictionary, outfile, indent = 4)
 
+
+def availableForTrading():
+    #checks if the stock market is open by making sure it is now a blacklisted date
+    todayIsBlacklisted = False
+    for date in BlacklistedDates:
+        if( str(timeNow[0:10]) == str(date)):
+            todayIsBlacklisted = True
+
+
 def logClosingPrice(stock):
     #time format 2020-01-11T20:19:00.000000+00:00
     timeNow = str(zulu.now())
     
     #opens the json file with the closing prices 
-    with open('closingPricesWeek.json') as json_file:
+    with open('Pricesper10min.json') as json_file:
         closingPricesWeekDictionary = json.load(json_file)
         
 
@@ -67,12 +76,6 @@ def logClosingPrice(stock):
     #formats the date to allow for testing
     formatedDate = str(timeNow[0:11]) + str(hour) + ":"+ str(logTime)
 
-    #checks if the stock market is open by making sure it is now a blacklisted date
-    todayIsBlacklisted = False
-    for date in BlacklistedDates:
-        if( str(timeNow[0:10]) == str(date)):
-            todayIsBlacklisted = True
-
     #checks if the time now is the proper logging time
     if (timeNow[0:16] == formatedDate):
         #if the date is not blacklisted
@@ -83,10 +86,10 @@ def logClosingPrice(stock):
             closingPricesWeekDictionary[dateFormated] = latestPrice[2:10]
     
     #opens json file with the closing prices
-    with open('closingPricesWeek.json', 'w') as outfile:
+    with open('Pricesper10min.json', 'w') as outfile:
         json.dump(closingPricesWeekDictionary, outfile, indent = 4)
 
-def buy(price, stock):
+def buy(stock):
     #opens the json file with the moving average
     with open('MovingAverage.json') as json_file:
         MovingAverageDictionary = json.load(json_file)
@@ -98,17 +101,46 @@ def buy(price, stock):
         MovingAverages.append(MovingAverageDictionary[key])
     lastMovingAveragePrice = MovingAverages[len(MovingAverages)-1]
 
+    #open file to gather the last few prices
+    with open('Pricesper10min.json') as json_file:
+        Pricesper10min = json.load(json_file)
 
+    pricesLast10min = []
+    for key in MovingAverageDictionary:
+        pricesLast10min.append(Pricesper10min[key])
+    
+    lastPrice = pricesLast10min[len(pricesLast10min)-1]
+    secondTolastPrice = pricesLast10min[len(pricesLast10min)-2]
 
+    if (lastPrice > lastMovingAveragePrice and secondTolastPrice <  lastMovingAveragePrice):
+        trader.orders.order_buy_limit(stock, 1, lastPrice, timeInForce = "gfd")
+        print("Noice")
 
+def sell(stock):
+    #opens the json file with the moving average
+    with open('MovingAverage.json') as json_file:
+        MovingAverageDictionary = json.load(json_file)
+    
+    MovingAverages = []
+    lastMovingAveragePrice = 0
+    #finds the last moving average price
+    for key in MovingAverageDictionary:
+        MovingAverages.append(MovingAverageDictionary[key])
+    lastMovingAveragePrice = MovingAverages[len(MovingAverages)-1]
 
+    #open file to gather the last few prices
+    with open('Pricesper10min.json') as json_file:
+        Pricesper10min = json.load(json_file)
 
+    pricesLast10min = []
+    for key in MovingAverageDictionary:
+        pricesLast10min.append(Pricesper10min[key])
+    
+    lastPrice = pricesLast10min[len(pricesLast10min)-1]
+    secondTolastPrice = pricesLast10min[len(pricesLast10min)-2]
 
-
-
-
-
-
+    if (lastPrice < lastMovingAveragePrice and secondTolastPrice > lastMovingAveragePrice):
+        trader.orders.order_sell_limit(stock, 1, lastPrice, timeInForce = "gfd")
 
 
 def main():
@@ -117,14 +149,17 @@ def main():
 
     #define the stock we are going to use
     stock = "HEXO"
-    #
-    movingAverage(json, stock)
-    logClosingPrice(stock)
     
-    currentStockPrice = trader.stocks.get_latest_price(stock)
-    buy(currentStockPrice, stock)
     
-
-
+    while (True):
+        timeNow = str(zulu.now())
+        if(availableForTrading(timeNow)):
+            currentStockPrice = trader.stocks.get_latest_price(stock)
+            movingAverage(json, stock)
+            logClosingPrice(stock)
+    
+    
+    buy(stock)
+    sell(stock)
 
 main()
