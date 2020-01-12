@@ -8,7 +8,7 @@ def login():
     #login using the login
     #===============================================
     #u need the 2FA to login whenever it asks
-    trader.login(
+    trader.login()
 
 def checkBalance():
     #checks the balance by loading the account and returning the buying power
@@ -97,7 +97,7 @@ def buy(price, stock):
     for key in MovingAverageDictionary:
         MovingAverages.append(MovingAverageDictionary[key])
     lastMovingAveragePrice = MovingAverages[len(MovingAverages)-1]
-    
+
 
 
 
