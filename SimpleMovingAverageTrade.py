@@ -97,6 +97,7 @@ def buy(price, stock):
     for key in MovingAverageDictionary:
         MovingAverages.append(MovingAverageDictionary[key])
     lastMovingAveragePrice = MovingAverages[len(MovingAverages)-1]
+    
 
 
 
