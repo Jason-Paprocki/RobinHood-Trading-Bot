@@ -8,7 +8,7 @@ def login():
     #login using the login
     #===============================================
     #u need the 2FA to login whenever it asks
-    trader.login("",store_session=True)
+    trader.login()
 
 def checkBalance():
     #checks the balance by loading the account and returning the buying power
@@ -42,7 +42,6 @@ def logClosingPrice(json, timeNow, stock):
     #the moving average is calculated every 10 minutes
     #if the current minute is a ten then its time to log
     logNow = False
-    hour = int(timeNow[11:13])
     currentMinute = timeNow[14:16]
     if (str(currentMinute[1:2]) == "0"):
         logNow = True
@@ -85,7 +84,6 @@ def movingAverage(json):
             SMA += float(dataPriceList[t])
         SMA = SMA / 5
         SimpleMovingAverageDictionary[datePriceList[i+5]] = str(SMA)
-        print(str(SMA))
 
     #The finished dictionary ready for json dumping
     with open('MovingAverage.json', 'w') as outfile:
@@ -94,17 +92,29 @@ def movingAverage(json):
     json_file.close()
     outfile.close()
 
+#checks the time 
+#opens the blacklisted dates
+#checks if the date is on a blaclisted date
+#checks if the time is when the stock market is open
+def availableForTrading(timeNow):
+    #opens the json file with the blacklisted dates
+    with open('BlacklistedDates.json') as json_file:
+        blacklistedDatesDictionary = json.load(json_file)
+    json_file.close()
 
-def availableForTrading():
-    #checks if the stock market is open by making sure it is now a blacklisted date
-    todayIsBlacklisted = False
-    for date in BlacklistedDates:
-        if( str(timeNow[0:10]) == str(date)):
-            todayIsBlacklisted = True
-    return todayIsBlacklisted
+    #checks if the stock market is open by making sure it is not a blacklisted date
+    for date in blacklistedDatesDictionary:
+        if( str(timeNow[0:10]) == str(date) ):
+            return False
+    
+    #checks if time is between 9:30am and 4:00pm
+    hourAndMinute = int(timeNow[11:13] + timeNow[14:16])
+    if(hourAndMinute < 1430 or hourAndMinute > 2059):
+        return False
+    else:
+        return True
 
-
-
+#
 def conditionToBuy(json, currentTime, stock, currentStockPrice):
     #opens the json file with the moving average
     with open('MovingAverage.json') as json_file:
@@ -161,7 +171,7 @@ def main():
 
     #define the stock we are going to use
     stock = "HEXO"
-    
+    timeNow = str(zulu.now())
     #
     #while (True):
     #    timeNow = str(zulu.now())
@@ -171,7 +181,6 @@ def main():
     #        logClosingPrice(timeNow, stock)
     #        movingAverage(json, stock)
 
-    movingAverage(json)
-
+    print(availableForTrading(timeNow))
 
 main()
