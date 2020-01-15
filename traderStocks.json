@@ -1,0 +1,21 @@
+[
+    {
+        "url": "https://api.robinhood.com/positions/506787910/f786c13a-e28f-42a2-8e0e-c7e479688136/",
+        "instrument": "https://api.robinhood.com/instruments/f786c13a-e28f-42a2-8e0e-c7e479688136/",
+        "account": "https://api.robinhood.com/accounts/506787910/",
+        "account_number": "506787910",
+        "average_buy_price": "0.0000",
+        "pending_average_buy_price": "0.0000",
+        "quantity": "0.00000000",
+        "intraday_average_buy_price": "0.0000",
+        "intraday_quantity": "0.00000000",
+        "shares_held_for_buys": "1.00000000",
+        "shares_held_for_sells": "0.00000000",
+        "shares_held_for_stock_grants": "0.00000000",
+        "shares_held_for_options_collateral": "0.00000000",
+        "shares_held_for_options_events": "0.00000000",
+        "shares_pending_from_options_events": "0.00000000",
+        "updated_at": "2020-01-15T01:51:33.082572Z",
+        "created_at": "2020-01-12T04:07:52.489578Z"
+    }
+]

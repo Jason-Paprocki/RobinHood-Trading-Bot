@@ -4,16 +4,32 @@ import zulu
 import time
 import threading
 
+#calls the login function to log the user in for trading
+#2FA is required for a key to last longerr than 24 hours
 def login():
     #login using the login
     #===============================================
     #u need the 2FA to login whenever it asks
     trader.login(
 
+#checks the balance by loading the account and returning the buying power
 def checkBalance():
-    #checks the balance by loading the account and returning the buying power
+    #dictionary with all the account data
     dictionary = trader.profiles.load_account_profile()
     return dictionary["buying_power"]
+
+#access the users portfolio
+#pulls all the stocks currently owned by the trader
+def traderStocks(json, stock):
+    dictionary = trader.account.get_current_positions()
+    dictDump = {}
+
+    for item in dict:
+        i = 1
+        if( str(trader.get_name_by_url(item['instrument'])) == str(trader.get_name_by_symbol(stock)[0])):
+            dictDump[str(trader.get_name_by_url(item['instrument'])).upper()] = str(i)
+            i+=1
+    
 
 #get prices for the past week
 ##prices are logged every 10 minutes since the market opens
@@ -223,7 +239,6 @@ def main():
 
     #define the stock we are going to use
     stock = "HEXO"
-    timeNow = str(zulu.now())
     
     while (True):
         timeNow = str(zulu.now())
