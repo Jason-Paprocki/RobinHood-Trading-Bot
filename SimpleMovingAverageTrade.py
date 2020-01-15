@@ -8,7 +8,7 @@ def login():
     #login using the login
     #===============================================
     #u need the 2FA to login whenever it asks
-    trader.login()
+    trader.login(
 
 def checkBalance():
     #checks the balance by loading the account and returning the buying power
@@ -114,11 +114,18 @@ def availableForTrading(timeNow):
     else:
         return True
 
-#
+#opens the moving average json file
+#opens the latest prices json file
+#checks if the last price crosses the last moving average from bottom to top
+#if true then buy
 def conditionToBuy(json, currentTime, stock, currentStockPrice):
     #opens the json file with the moving average
     with open('MovingAverage.json') as json_file:
         MovingAverageDictionary = json.load(json_file)
+    
+    #open file to gather the last few prices
+    with open('Pricesper10min.json') as json_file:
+        Pricesper10min = json.load(json_file)
     
     MovingAverages = []
     lastMovingAveragePrice = 0
@@ -127,14 +134,9 @@ def conditionToBuy(json, currentTime, stock, currentStockPrice):
         MovingAverages.append(MovingAverageDictionary[key])
     lastMovingAveragePrice = MovingAverages[len(MovingAverages)-1]
 
-    #open file to gather the last few prices
-    with open('Pricesper10min.json') as json_file:
-        Pricesper10min = json.load(json_file)
-
     pricesLast10min = []
     for key in MovingAverageDictionary:
         pricesLast10min.append(Pricesper10min[key])
-    
     lastPrice = pricesLast10min[len(pricesLast10min)-1]
     secondTolastPrice = pricesLast10min[len(pricesLast10min)-2]
 
@@ -147,10 +149,10 @@ def conditionToBuy(json, currentTime, stock, currentStockPrice):
 def buy(json, currentTime, stock, currentStockPrice):
 
     #executes the buy operation for the corresponding stock
-    trader.orders.order_buy_limit(stock, 1, lastPrice, timeInForce = "gfd")
+    trader.orders.order_buy_limit(stock, 1, lastPrice)
 
     #open file to gather previous trades
-    with open('tradingLog.json') as json_file:
+    with open('buyLog.json') as json_file:
         Log = json.load(json_file)
 
     #adds the current time of the log and price and adds it to the list
@@ -159,9 +161,59 @@ def buy(json, currentTime, stock, currentStockPrice):
     Log[logTime] = str(currentStockPrice) 
 
     #writes to the json file
-    with open('tradingLog.json', 'w') as outfile:
-        json.dump(closingPricesWeekDictionary, outfile, indent = 4)
+    with open('buyLog.json', 'w') as outfile:
+        json.dump(Log, outfile, indent = 4)
 
+#opens the moving average json file
+#opens the latest prices json file
+#checks if the last price crosses the last moving average from bottom to top
+#if true then buy
+def conditionToSell(json, currentTime, stock, currentStockPrice):
+    #opens the json file with the moving average
+    with open('MovingAverage.json') as json_file:
+        MovingAverageDictionary = json.load(json_file)
+    
+    #open file to gather the last few prices
+    with open('Pricesper10min.json') as json_file:
+        Pricesper10min = json.load(json_file)
+    
+    MovingAverages = []
+    lastMovingAveragePrice = 0
+    #finds the last moving average price
+    for key in MovingAverageDictionary:
+        MovingAverages.append(MovingAverageDictionary[key])
+    lastMovingAveragePrice = MovingAverages[len(MovingAverages)-1]
+
+    pricesLast10min = []
+    for key in MovingAverageDictionary:
+        pricesLast10min.append(Pricesper10min[key])
+    lastPrice = pricesLast10min[len(pricesLast10min)-1]
+    secondTolastPrice = pricesLast10min[len(pricesLast10min)-2]
+
+    if (lastPrice > lastMovingAveragePrice and secondTolastPrice <  lastMovingAveragePrice):
+        buy(json, currentTime, stock, currentStockPrice)
+        return True
+    else:
+        return False
+
+#
+def sell(json, currentTime, stock, currentStockPrice):
+
+    #executes the buy operation for the corresponding stock
+    trader.orders.order_sell_limit(stock, 1, lastPrice)
+
+    #open file to gather previous trades
+    with open('sellLog.json') as json_file:
+        Log = json.load(json_file)
+
+    #adds the current time of the log and price and adds it to the list
+    #time format 2020-01-11T20:19:00.000000+00:00
+    logTime = currentTime[0:19] + "Z"
+    Log[logTime] = str(currentStockPrice) 
+
+    #writes to the json file
+    with open('sellLog.json', 'w') as outfile:
+        json.dump(Log, outfile, indent = 4)
 
 
 
@@ -172,15 +224,15 @@ def main():
     #define the stock we are going to use
     stock = "HEXO"
     timeNow = str(zulu.now())
-    #
-    #while (True):
-    #    timeNow = str(zulu.now())
+    
+    while (True):
+        timeNow = str(zulu.now())
 
-    #    if(availableForTrading(timeNow)):
-    #        currentStockPrice = trader.stocks.get_latest_price(stock)
-    #        logClosingPrice(timeNow, stock)
-    #        movingAverage(json, stock)
+        if(availableForTrading(timeNow)):
+            currentStockPrice = trader.stocks.get_latest_price(stock)
+            logClosingPrice(timeNow, stock)
+            movingAverage(json, stock)
 
-    print(availableForTrading(timeNow))
+
 
 main()
