@@ -32,7 +32,7 @@ def main():
     while (True):
         timeNow = str(zulu.now())
 
-        if(availableForTrading(timeNow)):
+        if(availableForTrading(timeNow) and dayTrading()):
             currentStockPrice = trader.stocks.get_latest_price(stock)
             logClosingPrice(timeNow, stock)
             movingAverage(json, stock)
