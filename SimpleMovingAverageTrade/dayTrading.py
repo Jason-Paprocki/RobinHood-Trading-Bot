@@ -5,9 +5,12 @@
 #if there are 3 day trades in the last 5 days then return false
 def dayTrading(json, timeNow):
 
-   #opens the json file with the logs
-   with open('.json') as json_file:
-      logsDictionary = json.load(json_file)
+   #opens the json file with the buy logs
+   with open('buyLog.json') as json_file:
+      buyLogDictionary = json.load(json_file)
+   #opens the json file with the sell logs
+   with open('sellLog.json') as json_file:
+      sellLogDictionary = json.load(json_file)
 
    #YYYY-MM-DD
    dateNow = timeNow[0:10]
@@ -28,7 +31,20 @@ def dayTrading(json, timeNow):
       month5DaysAgo ==  "11" or month5DaysAgo ==  "10" or month5DaysAgo == "12"):
             date5DaysAgo = dateNow + 30
       
+      #febuary
       else:
          date5DaysAgo = dateNow + 29
 
-   
+   dayTrades = 0
+   for buyDate in buyLogDictionary:
+      buyCompareDate = str(buyLogDictionary[buyDate])
+      buyCompareDate = int(buyDate[8:10])
+      if (buyCompareDate >= date5DaysAgo ):
+         for sellDate in sellLogDictionary:
+            sellCompareDate = str(sellLogDictionary[sellDate])
+            sellCompareDate = int(sellDate[8:10])
+            if(buyCompareDate == sellCompareDate):
+               dayTrades +=1
+      if(dayTrades == 3):
+         return False
+   return True

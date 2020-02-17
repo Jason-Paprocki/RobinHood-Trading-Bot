@@ -17,6 +17,7 @@ from conditionToBuy import *
 from buy import *
 from conditionToSell import *
 from sell import *
+from dayTrading import *
 
 def main():
     #login first
