@@ -1,5 +1,6 @@
 import zulu
+import timedelta
 now = zulu.now()
-now = str(now)
-print(now[5:10])
-print(now[5:7])
+past =  now - timedelta(days-30)
+
+print(past)

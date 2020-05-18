@@ -30,6 +30,8 @@ def traderStocks(json, stock):
             dictDump[str(trader.get_name_by_url(item['instrument'])).upper()] = str(i)
             i+=1
     
+    return amount
+    
 
 #get prices for the past week
 ##prices are logged every 10 minutes since the market opens

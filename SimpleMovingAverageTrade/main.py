@@ -27,18 +27,22 @@ def main():
     #ticker symbol
     stock = "HEXO"
     
-    
-
 
     while (True):
+        #gets the current time
         timeNow = str(zulu.now())
 
         if(availableForTrading(timeNow) and dayTrading()):
+            #current stock price of the stock provided
             currentStockPrice = trader.stocks.get_latest_price(stock)
+
             logClosingPrice(timeNow, stock)
             movingAverage(json, stock)
 
-            if(conditionToBuy):
+            if(conditionToBuy and checkBalance > currentStockPrice):
                 buy()
+            
+            else:
+                print("cant buy")
 
 main()
